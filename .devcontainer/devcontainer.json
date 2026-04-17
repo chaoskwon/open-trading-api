@@ -1,0 +1,44 @@
+{
+  "name": "KIS Strategy Builder",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "20" }
+  },
+
+  "forwardPorts": [3000, 8000],
+  "portsAttributes": {
+    "3000": { "label": "Frontend (Next.js)", "onAutoForward": "openBrowser" },
+    "8000": { "label": "Backend (FastAPI)", "onAutoForward": "silent" }
+  },
+
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "bradlc.vscode-tailwindcss",
+        "dbaeumer.vscode-eslint"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python"
+      }
+    },
+    "codespaces": {
+      "openFiles": ["strategy_builder/start.sh"]
+    }
+  },
+
+  "secrets": {
+    "KIS_APP_KEY": {
+      "description": "KIS 모의투자 앱키 (한국투자증권 > API 신청)"
+    },
+    "KIS_APP_SECRET": {
+      "description": "KIS 모의투자 앱시크릿"
+    },
+    "KIS_ACCOUNT": {
+      "description": "모의투자 계좌번호 (8자리, 예: 50180000)"
+    }
+  }
+}
