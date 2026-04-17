@@ -33,18 +33,33 @@ mkdir -p "$KIS_CONFIG_DIR"
 if [ -n "$KIS_APP_KEY" ] && [ -n "$KIS_APP_SECRET" ] && [ -n "$KIS_ACCOUNT" ]; then
   cat > "$KIS_CONFIG_FILE" << YAML
 # KIS API 설정 (Codespaces Secrets로 자동 생성됨)
-my_app: "${KIS_APP_KEY}"
-my_sec: "${KIS_APP_SECRET}"
-my_acct: "0000000000"
-my_prod: "01"
-my_token: ""
-my_url: "https://openapi.koreainvestment.com:9443"
-my_prod: "https://openapi.koreainvestment.com:9443"
 
+# 실전투자 (Codespaces에서는 모의투자만 사용 — 실전 키는 더미)
+my_app: "dummy_real_app_key"
+my_sec: "dummy_real_secret"
+
+# 모의투자
 paper_app: "${KIS_APP_KEY}"
 paper_sec: "${KIS_APP_SECRET}"
+
+# HTS ID
+my_htsid: "@codespaces"
+
+# 계좌번호 앞 8자리
+my_acct_stock: "00000000"
 my_paper_stock: "${KIS_ACCOUNT}"
+
+# 계좌번호 뒤 2자리
+my_prod: "01"
+
+# domain
+prod: "https://openapi.koreainvestment.com:9443"
+ops: "ws://ops.koreainvestment.com:21000"
 vps: "https://openapivts.koreainvestment.com:29443"
+vops: "ws://ops.koreainvestment.com:31000"
+
+my_token: ""
+my_agent: "Mozilla/5.0"
 YAML
   echo "      KIS config created from Codespaces Secrets"
 else
