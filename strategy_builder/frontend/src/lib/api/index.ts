@@ -79,3 +79,17 @@ export {
   type PriceData,
   type PriceResponse,
 } from "./market";
+
+// Categories
+export {
+  listSectors,
+  listThemes,
+  resolveStocks,
+  CAP_RANGE_LABEL,
+  type SectorItem,
+  type ThemeItem,
+  type CapRange,
+  type ResolveRequest,
+  type ResolvedStock,
+  type ResolveResponse,
+} from "./categories";

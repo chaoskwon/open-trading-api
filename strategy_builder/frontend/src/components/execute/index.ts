@@ -4,5 +4,6 @@ export { OrderConfirmModal } from "./OrderConfirmModal";
 export { HoldingsList } from "./HoldingsList";
 export { ExecutionLog } from "./ExecutionLog";
 export { StockInput } from "./StockInput";
+export { CategoryFilter } from "./CategoryFilter";
 export { OrderbookPanel } from "./OrderbookPanel";
 export { OrderResultModal } from "./OrderResultModal";

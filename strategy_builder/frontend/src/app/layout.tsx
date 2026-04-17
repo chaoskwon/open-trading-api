@@ -35,6 +35,7 @@ export default function RootLayout({
     <html lang="ko">
       <body
         className={`${notoSansKR.variable} ${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        suppressHydrationWarning
       >
         <Providers>
           <Navigation />

@@ -143,35 +143,72 @@ def get_daily_prices(
         return pd.DataFrame()
 
     try:
-        end_date = datetime.now().strftime("%Y%m%d")
-        start_date = (datetime.now() - timedelta(days=days + 50)).strftime("%Y%m%d")
-
-        # TR_ID 설정
         tr_id = "FHKST03010100"
+        # KIS inquire-daily-itemchartprice는 1회 호출당 최대 100바만 반환한다.
+        # 필요 바 수가 더 많거나 첫 청크가 100 미만을 돌려줄 때는 종료일을 뒤로
+        # 밀면서 추가 청크를 받아 병합한다. 1청크 ≈ 100거래일 ≈ 150달력일.
+        CHUNK_CAL_DAYS = 150
+        max_chunks = (days // 90) + 2
 
-        params = {
-            "FID_COND_MRKT_DIV_CODE": "J",
-            "FID_INPUT_ISCD": stock_code,
-            "FID_INPUT_DATE_1": start_date,
-            "FID_INPUT_DATE_2": end_date,
-            "FID_PERIOD_DIV_CODE": "D",
-            "FID_ORG_ADJ_PRC": "0"  # 수정주가
-        }
+        collected: dict[str, dict] = {}
+        end_dt = datetime.now()
 
-        res = ka._url_fetch(
-            "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice",
-            tr_id, "", params
-        )
+        for chunk_i in range(max_chunks):
+            start_dt = end_dt - timedelta(days=CHUNK_CAL_DAYS)
 
-        if not res.isOK():
-            logging.warning(f"API 호출 실패: {stock_code}")
-            return pd.DataFrame()
+            params = {
+                "FID_COND_MRKT_DIV_CODE": "J",
+                "FID_INPUT_ISCD": stock_code,
+                "FID_INPUT_DATE_1": start_dt.strftime("%Y%m%d"),
+                "FID_INPUT_DATE_2": end_dt.strftime("%Y%m%d"),
+                "FID_PERIOD_DIV_CODE": "D",
+                "FID_ORG_ADJ_PRC": "0"
+            }
 
-        df = pd.DataFrame(res.getBody().output2)
+            # 초당 거래건수 초과(EGW00201) 대응을 위해 지수 backoff로 재시도
+            res = None
+            for attempt in range(4):
+                res = ka._url_fetch(
+                    "/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice",
+                    tr_id, "", params
+                )
+                if res.isOK():
+                    break
+                time.sleep(0.5 + attempt * 0.5)
 
-        if df.empty:
+            if not res.isOK():
+                if chunk_i == 0:
+                    logging.warning(f"API 호출 실패: {stock_code}")
+                break
+
+            output2 = res.getBody().output2
+            if not output2:
+                break
+
+            new_count = 0
+            for row in output2:
+                d = row.get("stck_bsop_date", "")
+                if d and d not in collected:
+                    collected[d] = row
+                    new_count += 1
+
+            if len(collected) >= days or new_count == 0:
+                break
+
+            oldest = min(collected.keys())
+            try:
+                end_dt = datetime.strptime(oldest, "%Y%m%d") - timedelta(days=1)
+            except ValueError:
+                break
+
+            # 연속 청크는 KIS 초당 거래건수 한도를 넘지 않도록 간격 유지
+            time.sleep(0.3)
+
+        if not collected:
             logging.warning(f"데이터 없음: {stock_code}")
             return pd.DataFrame()
+
+        df = pd.DataFrame(list(collected.values()))
 
         # 정규화
         df = df.rename(columns={
